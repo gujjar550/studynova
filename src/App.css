@@ -1,0 +1,80 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+body {
+  background-color: #f4f6fb;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.logo {
+  color: #2b59c3;
+  font-size: 28px;
+}
+
+.search-bar {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  width: 250px;
+}
+
+.hero {
+  text-align: center;
+  padding: 60px 20px 30px;
+}
+
+.hero h2 {
+  font-size: 32px;
+  color: #1a1a2e;
+  margin-bottom: 10px;
+}
+
+.hero p {
+  color: #555;
+  font-size: 16px;
+}
+
+.categories {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 40px 20px;
+}
+
+.card {
+  background-color: #2b59c3;
+  color: white;
+  padding: 30px 40px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  background-color: #1a3f8f;
+}
+
+.footer {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+  font-size: 14px;
+  margin-top: 40px;
+}
