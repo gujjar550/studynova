@@ -11,6 +11,7 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
   const [filesData, setFilesData] = useState([])
   const [bookName, setBookName] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState('')
   const [loadingFiles, setLoadingFiles] = useState(false)
   const [favorites, setFavorites] = useState([])
 
@@ -49,40 +50,47 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
     setLoadingFiles(false)
   }
 
+  const uploadOneFile = async (file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('upload_preset', UPLOAD_PRESET)
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`, {
+      method: 'POST',
+      body: formData
+    })
+    const data = await res.json()
+
+    await addDoc(collection(db, collectionName), {
+      topic: selectedTopic,
+      book: bookName,
+      fileName: file.name,
+      url: data.secure_url,
+      createdAt: new Date().toISOString()
+    })
+  }
+
   const handleUpload = async (e) => {
     if (!bookName.trim()) {
       alert('Pehle book ka naam likhein')
       return
     }
-    const file = e.target.files[0]
-    if (!file) return
+    const files = Array.from(e.target.files)
+    if (files.length === 0) return
 
     setUploading(true)
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('upload_preset', UPLOAD_PRESET)
-
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`, {
-        method: 'POST',
-        body: formData
-      })
-      const data = await res.json()
-
-      await addDoc(collection(db, collectionName), {
-        topic: selectedTopic,
-        book: bookName,
-        fileName: file.name,
-        url: data.secure_url,
-        createdAt: new Date().toISOString()
-      })
-
+      for (let i = 0; i < files.length; i++) {
+        setUploadProgress(`Uploading ${i + 1} of ${files.length}...`)
+        await uploadOneFile(files[i])
+      }
       loadFiles(selectedTopic)
       e.target.value = ''
     } catch (err) {
       alert('Upload mein error aayi: ' + err.message)
     }
     setUploading(false)
+    setUploadProgress('')
   }
 
   const handleDelete = async (fileId, fileName) => {
@@ -165,8 +173,8 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
               onChange={(e) => setBookName(e.target.value)}
               style={{ padding: '8px', width: '300px', marginRight: '10px' }}
             />
-            <input type="file" accept="application/pdf" onChange={handleUpload} disabled={uploading} />
-            {uploading && <p style={{ color: '#2b59c3' }}>Upload ho rahi hai, ruk jaiye...</p>}
+            <input type="file" accept="application/pdf" multiple onChange={handleUpload} disabled={uploading} />
+            {uploading && <p style={{ color: '#2b59c3' }}>{uploadProgress || 'Upload ho rahi hai, ruk jaiye...'}</p>}
           </div>
         )}
 
