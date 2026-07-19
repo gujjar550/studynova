@@ -29,39 +29,41 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
     if (saved) setFavorites(JSON.parse(saved))
   }, [])
 
-  const toggleFavorite = (fileId) => {
+  function toggleFavorite(fileId) {
     let updated
     if (favorites.includes(fileId)) {
-      updated = favorites.filter(id => id !== fileId)
+      updated = favorites.filter(function (id) { return id !== fileId })
     } else {
-      updated = [...favorites, fileId]
+      updated = favorites.concat([fileId])
     }
     setFavorites(updated)
     localStorage.setItem('studynova_favorites', JSON.stringify(updated))
   }
 
-  const openTopic = async (topic) => {
+  async function openTopic(topic) {
     setSelectedTopic(topic)
     setBookName('')
     setView('upload')
     loadFiles(topic)
   }
 
-  const loadFiles = async (topic) => {
+  async function loadFiles(topic) {
     setLoadingFiles(true)
     const q = query(collection(db, collectionName), where("topic", "==", topic))
     const snapshot = await getDocs(q)
-    const files = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+    const files = snapshot.docs.map(function (d) {
+      return Object.assign({ id: d.id }, d.data())
+    })
     setFilesData(files)
     setLoadingFiles(false)
   }
 
-  const uploadOneFile = async (file) => {
+  async function uploadOneFile(file) {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('upload_preset', UPLOAD_PRESET)
 
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`, {
+    const res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/raw/upload', {
       method: 'POST',
       body: formData
     })
@@ -77,7 +79,7 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
     })
   }
 
-  const handleUpload = async (e) => {
+  async function handleUpload(e) {
     if (!bookName.trim()) {
       alert('Pehle book ka naam likhein')
       return
@@ -88,4 +90,42 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
     setUploading(true)
     try {
       for (let i = 0; i < files.length; i++) {
-        setUploadProg
+        setUploadProgress('Uploading file ' + (i + 1) + ' of ' + files.length)
+        await uploadOneFile(files[i])
+      }
+      loadFiles(selectedTopic)
+      e.target.value = ''
+    } catch (err) {
+      alert('Upload mein error aayi: ' + err.message)
+    }
+    setUploading(false)
+    setUploadProgress('')
+  }
+
+  async function handleDelete(fileId, fileName) {
+    const confirmDelete = window.confirm('Kya aap is file ko delete karna chahte hain: ' + fileName)
+    if (!confirmDelete) return
+    try {
+      await deleteDoc(doc(db, collectionName, fileId))
+      loadFiles(selectedTopic)
+    } catch (err) {
+      alert('Delete mein error aayi: ' + err.message)
+    }
+  }
+
+  function goBack() {
+    if (view === 'upload' && selectedTopic.startsWith('Semester')) {
+      setView('bsSemesters')
+    } else {
+      setView('main')
+    }
+  }
+
+  if (view === 'main') {
+    return (
+      <div style={{ padding: '40px' }}>
+        <h2>{subjectName}</h2>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginTop: '20px' }}>
+          {mainTopics.map(function (topic) {
+            return (
+              <div key={topic} onClick={function () { openTopic(topic) }} cl
