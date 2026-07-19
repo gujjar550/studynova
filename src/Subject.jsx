@@ -5,12 +5,6 @@ import { collection, addDoc, query, where, getDocs, deleteDoc, doc } from 'fireb
 const CLOUD_NAME = "judww3bl"
 const UPLOAD_PRESET = "studynova_unsigned"
 
-function formatFileSize(bytes) {
-  if (!bytes) return ''
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB'
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
-}
-
 function Subject({ isAdmin, subjectName, collectionName, search }) {
   const [view, setView] = useState('main')
   const [selectedTopic, setSelectedTopic] = useState('')
@@ -29,41 +23,39 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
     if (saved) setFavorites(JSON.parse(saved))
   }, [])
 
-  function toggleFavorite(fileId) {
+  const toggleFavorite = (fileId) => {
     let updated
     if (favorites.includes(fileId)) {
-      updated = favorites.filter(function (id) { return id !== fileId })
+      updated = favorites.filter(id => id !== fileId)
     } else {
-      updated = favorites.concat([fileId])
+      updated = [...favorites, fileId]
     }
     setFavorites(updated)
     localStorage.setItem('studynova_favorites', JSON.stringify(updated))
   }
 
-  async function openTopic(topic) {
+  const openTopic = async (topic) => {
     setSelectedTopic(topic)
     setBookName('')
     setView('upload')
     loadFiles(topic)
   }
 
-  async function loadFiles(topic) {
+  const loadFiles = async (topic) => {
     setLoadingFiles(true)
     const q = query(collection(db, collectionName), where("topic", "==", topic))
     const snapshot = await getDocs(q)
-    const files = snapshot.docs.map(function (d) {
-      return Object.assign({ id: d.id }, d.data())
-    })
+    const files = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
     setFilesData(files)
     setLoadingFiles(false)
   }
 
-  async function uploadOneFile(file) {
+  const uploadOneFile = async (file) => {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('upload_preset', UPLOAD_PRESET)
 
-    const res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/raw/upload', {
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`, {
       method: 'POST',
       body: formData
     })
@@ -74,12 +66,11 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
       book: bookName,
       fileName: file.name,
       url: data.secure_url,
-      fileSize: file.size,
       createdAt: new Date().toISOString()
     })
   }
 
-  async function handleUpload(e) {
+  const handleUpload = async (e) => {
     if (!bookName.trim()) {
       alert('Pehle book ka naam likhein')
       return
@@ -90,7 +81,7 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
     setUploading(true)
     try {
       for (let i = 0; i < files.length; i++) {
-        setUploadProgress('Uploading file ' + (i + 1) + ' of ' + files.length)
+        setUploadProgress(`Uploading ${i + 1} of ${files.length}...`)
         await uploadOneFile(files[i])
       }
       loadFiles(selectedTopic)
@@ -102,8 +93,8 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
     setUploadProgress('')
   }
 
-  async function handleDelete(fileId, fileName) {
-    const confirmDelete = window.confirm('Kya aap is file ko delete karna chahte hain: ' + fileName)
+  const handleDelete = async (fileId, fileName) => {
+    const confirmDelete = window.confirm(`Kya aap "${fileName}" ko delete karna chahte hain?`)
     if (!confirmDelete) return
     try {
       await deleteDoc(doc(db, collectionName, fileId))
@@ -113,7 +104,7 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
     }
   }
 
-  function goBack() {
+  const goBack = () => {
     if (view === 'upload' && selectedTopic.startsWith('Semester')) {
       setView('bsSemesters')
     } else {
@@ -126,6 +117,121 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
       <div style={{ padding: '40px' }}>
         <h2>{subjectName}</h2>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginTop: '20px' }}>
-          {mainTopics.map(function (topic) {
-            return (
-              <div key={topic} onClick={function () { openTopic(topic) }} cl
+          {mainTopics.map((topic) => (
+            <div key={topic} onClick={() => openTopic(topic)} className="card">
+              {topic}
+            </div>
+          ))}
+          <div onClick={() => setView('bsSemesters')} className="card">
+            BS {subjectName}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (view === 'bsSemesters') {
+    return (
+      <div style={{ padding: '40px' }}>
+        <button onClick={() => setView('main')} style={{ marginBottom: '20px' }}>← Back</button>
+        <h2>BS {subjectName} - Select Semester</h2>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginTop: '20px' }}>
+          {semesters.map((sem) => (
+            <div key={sem} onClick={() => openTopic(sem)} className="card">
+              {sem}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (view === 'upload' && selectedTopic) {
+    const filteredFiles = filesData.filter(entry => {
+      if (!search || !search.trim()) return true
+      const term = search.toLowerCase()
+      return entry.book.toLowerCase().includes(term) || entry.fileName.toLowerCase().includes(term)
+    })
+
+    const grouped = {}
+    filteredFiles.forEach(entry => {
+      if (!grouped[entry.book]) grouped[entry.book] = []
+      grouped[entry.book].push(entry)
+    })
+
+    return (
+      <div style={{ padding: '40px' }}>
+        <button onClick={goBack} style={{ marginBottom: '20px' }}>← Back</button>
+        <h2>{selectedTopic} - {subjectName} Notes</h2>
+
+        {isAdmin && (
+          <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+            <input
+              type="text"
+              placeholder="Book ka naam likhein"
+              value={bookName}
+              onChange={(e) => setBookName(e.target.value)}
+              style={{ padding: '8px', width: '300px', marginRight: '10px' }}
+            />
+            <input type="file" accept="application/pdf" multiple onChange={handleUpload} disabled={uploading} />
+            {uploading && <p style={{ color: '#2b59c3' }}>{uploadProgress || 'Upload ho rahi hai, ruk jaiye...'}</p>}
+          </div>
+        )}
+
+        <div style={{ marginTop: '30px' }}>
+          {loadingFiles && (
+            <div style={{ textAlign: 'center', padding: '30px' }}>
+              <div style={{
+                width: '36px',
+                height: '36px',
+                border: '4px solid #d7dce5',
+                borderTop: '4px solid #2b59c3',
+                borderRadius: '50%',
+                margin: '0 auto',
+                animation: 'spin 0.8s linear infinite'
+              }}></div>
+              <p style={{ marginTop: '12px', color: '#6b7280' }}>Loading...</p>
+            </div>
+          )}
+
+          {!loadingFiles && Object.keys(grouped).length === 0 && (
+            <p>{search && search.trim() ? 'Koi PDF is naam se nahi mili.' : 'Abhi koi PDF upload nahi hui.'}</p>
+          )}
+
+          {!loadingFiles && Object.keys(grouped).map((book) => (
+            <div key={book} style={{ marginBottom: '20px' }}>
+              <h3 style={{ color: '#2b59c3' }}>{book}</h3>
+              <ul>
+                {grouped[book].map((entry) => (
+                  <li key={entry.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                    <span
+                      onClick={() => toggleFavorite(entry.id)}
+                      style={{ cursor: 'pointer', fontSize: '1.1rem' }}
+                    >
+                      {favorites.includes(entry.id) ? '⭐' : '☆'}
+                    </span>
+                    <a href={entry.url} target="_blank" rel="noopener noreferrer">
+                      {entry.fileName}
+                    </a>
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleDelete(entry.id, entry.fileName)}
+                        style={{ background: '#e04b4b', color: '#fff', border: 'none', borderRadius: '5px', padding: '2px 8px', fontSize: '0.8rem', cursor: 'pointer' }}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}
+
+export default Subject
