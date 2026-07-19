@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { db } from './firebaseConfig'
 import { collection, addDoc, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore'
 
@@ -12,9 +12,26 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
   const [bookName, setBookName] = useState('')
   const [uploading, setUploading] = useState(false)
   const [loadingFiles, setLoadingFiles] = useState(false)
+  const [favorites, setFavorites] = useState([])
 
   const mainTopics = ['Class 9', 'Class 10', '1st Year', '2nd Year']
   const semesters = ['Semester 1', 'Semester 2', 'Semester 3', 'Semester 4', 'Semester 5', 'Semester 6', 'Semester 7', 'Semester 8']
+
+  useEffect(() => {
+    const saved = localStorage.getItem('studynova_favorites')
+    if (saved) setFavorites(JSON.parse(saved))
+  }, [])
+
+  const toggleFavorite = (fileId) => {
+    let updated
+    if (favorites.includes(fileId)) {
+      updated = favorites.filter(id => id !== fileId)
+    } else {
+      updated = [...favorites, fileId]
+    }
+    setFavorites(updated)
+    localStorage.setItem('studynova_favorites', JSON.stringify(updated))
+  }
 
   const openTopic = async (topic) => {
     setSelectedTopic(topic)
@@ -179,6 +196,12 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
               <ul>
                 {grouped[book].map((entry) => (
                   <li key={entry.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                    <span
+                      onClick={() => toggleFavorite(entry.id)}
+                      style={{ cursor: 'pointer', fontSize: '1.1rem' }}
+                    >
+                      {favorites.includes(entry.id) ? '⭐' : '☆'}
+                    </span>
                     <a href={entry.url} target="_blank" rel="noopener noreferrer">
                       {entry.fileName}
                     </a>
