@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { db } from './firebaseConfig'
-import { collection, addDoc, query, where, getDocs } from 'firebase/firestore'
+import { collection, addDoc, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore'
 
 const CLOUD_NAME = "judww3bl"
 const UPLOAD_PRESET = "studynova_unsigned"
@@ -27,7 +27,7 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
     setLoadingFiles(true)
     const q = query(collection(db, collectionName), where("topic", "==", topic))
     const snapshot = await getDocs(q)
-    const files = snapshot.docs.map(doc => doc.data())
+    const files = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
     setFilesData(files)
     setLoadingFiles(false)
   }
@@ -66,6 +66,17 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
       alert('Upload mein error aayi: ' + err.message)
     }
     setUploading(false)
+  }
+
+  const handleDelete = async (fileId, fileName) => {
+    const confirmDelete = window.confirm(`Kya aap "${fileName}" ko delete karna chahte hain?`)
+    if (!confirmDelete) return
+    try {
+      await deleteDoc(doc(db, collectionName, fileId))
+      loadFiles(selectedTopic)
+    } catch (err) {
+      alert('Delete mein error aayi: ' + err.message)
+    }
   }
 
   const goBack = () => {
@@ -166,11 +177,19 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
             <div key={book} style={{ marginBottom: '20px' }}>
               <h3 style={{ color: '#2b59c3' }}>{book}</h3>
               <ul>
-                {grouped[book].map((entry, idx) => (
-                  <li key={idx}>
+                {grouped[book].map((entry) => (
+                  <li key={entry.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
                     <a href={entry.url} target="_blank" rel="noopener noreferrer">
                       {entry.fileName}
                     </a>
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleDelete(entry.id, entry.fileName)}
+                        style={{ background: '#e04b4b', color: '#fff', border: 'none', borderRadius: '5px', padding: '2px 8px', fontSize: '0.8rem', cursor: 'pointer' }}
+                      >
+                        Delete
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
