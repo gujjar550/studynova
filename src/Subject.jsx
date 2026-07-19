@@ -5,7 +5,7 @@ import { collection, addDoc, query, where, getDocs } from 'firebase/firestore'
 const CLOUD_NAME = "judww3bl"
 const UPLOAD_PRESET = "studynova_unsigned"
 
-function Subject({ isAdmin, subjectName, collectionName }) {
+function Subject({ isAdmin, subjectName, collectionName, search }) {
   const [view, setView] = useState('main')
   const [selectedTopic, setSelectedTopic] = useState('')
   const [filesData, setFilesData] = useState([])
@@ -108,8 +108,14 @@ function Subject({ isAdmin, subjectName, collectionName }) {
   }
 
   if (view === 'upload') {
+    const filteredFiles = filesData.filter(entry => {
+      if (!search || !search.trim()) return true
+      const term = search.toLowerCase()
+      return entry.book.toLowerCase().includes(term) || entry.fileName.toLowerCase().includes(term)
+    })
+
     const grouped = {}
-    filesData.forEach(entry => {
+    filteredFiles.forEach(entry => {
       if (!grouped[entry.book]) grouped[entry.book] = []
       grouped[entry.book].push(entry)
     })
@@ -134,7 +140,9 @@ function Subject({ isAdmin, subjectName, collectionName }) {
         )}
 
         <div style={{ marginTop: '30px' }}>
-          {Object.keys(grouped).length === 0 && <p>Abhi koi PDF upload nahi hui.</p>}
+          {Object.keys(grouped).length === 0 && (
+            <p>{search && search.trim() ? 'Koi PDF is naam se nahi mili.' : 'Abhi koi PDF upload nahi hui.'}</p>
+          )}
           {Object.keys(grouped).map((book) => (
             <div key={book} style={{ marginBottom: '20px' }}>
               <h3 style={{ color: '#2b59c3' }}>{book}</h3>
