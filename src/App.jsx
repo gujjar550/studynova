@@ -7,6 +7,7 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [showLogin, setShowLogin] = useState(false)
   const [passwordInput, setPasswordInput] = useState('')
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     const saved = localStorage.getItem('studynova_admin')
@@ -43,9 +44,16 @@ function App() {
       <div className="app">
         <header className="navbar">
           <h1 className="logo" onClick={() => setPage('home')} style={{cursor: 'pointer'}}>📚 StudyNova</h1>
+          <input
+            type="text"
+            placeholder="Search in this subject..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="search-bar"
+          />
           {isAdmin && <button onClick={handleLogout}>Logout Admin</button>}
         </header>
-        <Subject isAdmin={isAdmin} subjectName={subj.name} collectionName={subj.collection} />
+        <Subject isAdmin={isAdmin} subjectName={subj.name} collectionName={subj.collection} search={search} setSearch={setSearch} />
       </div>
     )
   }
@@ -54,7 +62,6 @@ function App() {
     <div className="app">
       <header className="navbar">
         <h1 className="logo">📚 StudyNova</h1>
-        <input type="text" placeholder="Search notes..." className="search-bar" />
         {isAdmin ? (
           <button onClick={handleLogout}>Logout Admin</button>
         ) : (
