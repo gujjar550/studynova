@@ -5,6 +5,12 @@ import { collection, addDoc, query, where, getDocs, deleteDoc, doc } from 'fireb
 const CLOUD_NAME = "judww3bl"
 const UPLOAD_PRESET = "studynova_unsigned"
 
+function formatFileSize(bytes) {
+  if (!bytes) return ''
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
+
 function Subject({ isAdmin, subjectName, collectionName, search }) {
   const [view, setView] = useState('main')
   const [selectedTopic, setSelectedTopic] = useState('')
@@ -66,6 +72,7 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
       book: bookName,
       fileName: file.name,
       url: data.secure_url,
+      fileSize: file.size,
       createdAt: new Date().toISOString()
     })
   }
@@ -155,83 +162,4 @@ function Subject({ isAdmin, subjectName, collectionName, search }) {
 
     const grouped = {}
     filteredFiles.forEach(entry => {
-      if (!grouped[entry.book]) grouped[entry.book] = []
-      grouped[entry.book].push(entry)
-    })
-
-    return (
-      <div style={{ padding: '40px' }}>
-        <button onClick={goBack} style={{ marginBottom: '20px' }}>← Back</button>
-        <h2>{selectedTopic} - {subjectName} Notes</h2>
-
-        {isAdmin && (
-          <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-            <input
-              type="text"
-              placeholder="Book ka naam likhein"
-              value={bookName}
-              onChange={(e) => setBookName(e.target.value)}
-              style={{ padding: '8px', width: '300px', marginRight: '10px' }}
-            />
-            <input type="file" accept="application/pdf" multiple onChange={handleUpload} disabled={uploading} />
-            {uploading && <p style={{ color: '#2b59c3' }}>{uploadProgress || 'Upload ho rahi hai, ruk jaiye...'}</p>}
-          </div>
-        )}
-
-        <div style={{ marginTop: '30px' }}>
-          {loadingFiles && (
-            <div style={{ textAlign: 'center', padding: '30px' }}>
-              <div style={{
-                width: '36px',
-                height: '36px',
-                border: '4px solid #d7dce5',
-                borderTop: '4px solid #2b59c3',
-                borderRadius: '50%',
-                margin: '0 auto',
-                animation: 'spin 0.8s linear infinite'
-              }}></div>
-              <p style={{ marginTop: '12px', color: '#6b7280' }}>Loading...</p>
-            </div>
-          )}
-
-          {!loadingFiles && Object.keys(grouped).length === 0 && (
-            <p>{search && search.trim() ? 'Koi PDF is naam se nahi mili.' : 'Abhi koi PDF upload nahi hui.'}</p>
-          )}
-
-          {!loadingFiles && Object.keys(grouped).map((book) => (
-            <div key={book} style={{ marginBottom: '20px' }}>
-              <h3 style={{ color: '#2b59c3' }}>{book}</h3>
-              <ul>
-                {grouped[book].map((entry) => (
-                  <li key={entry.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                    <span
-                      onClick={() => toggleFavorite(entry.id)}
-                      style={{ cursor: 'pointer', fontSize: '1.1rem' }}
-                    >
-                      {favorites.includes(entry.id) ? '⭐' : '☆'}
-                    </span>
-                    <a href={entry.url} target="_blank" rel="noopener noreferrer">
-                      {entry.fileName}
-                    </a>
-                    {isAdmin && (
-                      <button
-                        onClick={() => handleDelete(entry.id, entry.fileName)}
-                        style={{ background: '#e04b4b', color: '#fff', border: 'none', borderRadius: '5px', padding: '2px 8px', fontSize: '0.8rem', cursor: 'pointer' }}
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  return null
-}
-
-export default Subject
+      if (!grouped[entry.bo
