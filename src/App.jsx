@@ -8,11 +8,20 @@ function App() {
   const [showLogin, setShowLogin] = useState(false)
   const [passwordInput, setPasswordInput] = useState('')
   const [search, setSearch] = useState('')
+  const [darkMode, setDarkMode] = useState(false)
 
   useEffect(() => {
     const saved = localStorage.getItem('studynova_admin')
     if (saved === 'true') setIsAdmin(true)
+    const savedTheme = localStorage.getItem('studynova_theme')
+    if (savedTheme === 'dark') setDarkMode(true)
   }, [])
+
+  const toggleDarkMode = () => {
+    const newMode = !darkMode
+    setDarkMode(newMode)
+    localStorage.setItem('studynova_theme', newMode ? 'dark' : 'light')
+  }
 
   const handleLogin = () => {
     if (passwordInput === 'gujjar10#') {
@@ -41,7 +50,7 @@ function App() {
   if (subjectPages[page]) {
     const subj = subjectPages[page]
     return (
-      <div className="app">
+      <div className={darkMode ? 'app dark' : 'app'}>
         <header className="navbar">
           <h1 className="logo" onClick={() => setPage('home')} style={{cursor: 'pointer'}}>📚 StudyNova</h1>
           <input
@@ -51,6 +60,7 @@ function App() {
             onChange={(e) => setSearch(e.target.value)}
             className="search-bar"
           />
+          <button onClick={toggleDarkMode}>{darkMode ? '☀️ Light' : '🌙 Dark'}</button>
           {isAdmin && <button onClick={handleLogout}>Logout Admin</button>}
         </header>
         <Subject isAdmin={isAdmin} subjectName={subj.name} collectionName={subj.collection} search={search} setSearch={setSearch} />
@@ -59,9 +69,10 @@ function App() {
   }
 
   return (
-    <div className="app">
+    <div className={darkMode ? 'app dark' : 'app'}>
       <header className="navbar">
         <h1 className="logo">📚 StudyNova</h1>
+        <button onClick={toggleDarkMode}>{darkMode ? '☀️ Light' : '🌙 Dark'}</button>
         {isAdmin ? (
           <button onClick={handleLogout}>Logout Admin</button>
         ) : (

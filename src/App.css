@@ -162,3 +162,32 @@ body {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+.app.dark {
+  background: #12141c;
+  color: #e5e8ee;
+}
+
+.app.dark .navbar {
+  background: #1b1e2a;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.app.dark .logo {
+  color: #6c8fe0;
+}
+
+.app.dark .search-bar {
+  background: #23263380;
+  color: #e5e8ee;
+  border-color: #3a3f52;
+}
+
+.app.dark .card {
+  background: #1b1e2a;
+  color: #6c8fe0;
+}
+
+.app.dark .footer {
+  border-top: 1px solid #2a2e3d;
+  color: #9aa1b0;
+}
