@@ -1,17 +1,51 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
-import Math from './Math'
+import Subject from './Subject'
 
 function App() {
   const [page, setPage] = useState('home')
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [showLogin, setShowLogin] = useState(false)
+  const [passwordInput, setPasswordInput] = useState('')
 
-  if (page === 'math') {
+  useEffect(() => {
+    const saved = localStorage.getItem('studynova_admin')
+    if (saved === 'true') setIsAdmin(true)
+  }, [])
+
+  const handleLogin = () => {
+    if (passwordInput === 'gujjar10#') {
+      setIsAdmin(true)
+      localStorage.setItem('studynova_admin', 'true')
+      setShowLogin(false)
+      setPasswordInput('')
+      alert('Admin login successful!')
+    } else {
+      alert('Galat password!')
+    }
+  }
+
+  const handleLogout = () => {
+    setIsAdmin(false)
+    localStorage.removeItem('studynova_admin')
+  }
+
+  const subjectPages = {
+    math: { name: 'Math', collection: 'mathNotes' },
+    physics: { name: 'Physics', collection: 'physicsNotes' },
+    cs: { name: 'Computer Science', collection: 'csNotes' },
+    chemistry: { name: 'Chemistry', collection: 'chemistryNotes' }
+  }
+
+  if (subjectPages[page]) {
+    const subj = subjectPages[page]
     return (
       <div className="app">
         <header className="navbar">
           <h1 className="logo" onClick={() => setPage('home')} style={{cursor: 'pointer'}}>📚 StudyNova</h1>
+          {isAdmin && <button onClick={handleLogout}>Logout Admin</button>}
         </header>
-        <Math />
+        <Subject isAdmin={isAdmin} subjectName={subj.name} collectionName={subj.collection} />
       </div>
     )
   }
@@ -21,7 +55,26 @@ function App() {
       <header className="navbar">
         <h1 className="logo">📚 StudyNova</h1>
         <input type="text" placeholder="Search notes..." className="search-bar" />
+        {isAdmin ? (
+          <button onClick={handleLogout}>Logout Admin</button>
+        ) : (
+          <button onClick={() => setShowLogin(true)}>Admin Login</button>
+        )}
       </header>
+
+      {showLogin && (
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <input
+            type="password"
+            placeholder="Admin password"
+            value={passwordInput}
+            onChange={(e) => setPasswordInput(e.target.value)}
+            style={{ padding: '8px', marginRight: '10px' }}
+          />
+          <button onClick={handleLogin}>Login</button>
+          <button onClick={() => setShowLogin(false)} style={{ marginLeft: '10px' }}>Cancel</button>
+        </div>
+      )}
 
       <section className="hero">
         <h2>Welcome to StudyNova</h2>
@@ -30,9 +83,9 @@ function App() {
 
       <section className="categories">
         <div className="card" onClick={() => setPage('math')}>Math</div>
-        <div className="card">Physics</div>
-        <div className="card">Computer Science</div>
-        <div className="card">Chemistry</div>
+        <div className="card" onClick={() => setPage('physics')}>Physics</div>
+        <div className="card" onClick={() => setPage('cs')}>Computer Science</div>
+        <div className="card" onClick={() => setPage('chemistry')}>Chemistry</div>
       </section>
 
       <footer className="footer">

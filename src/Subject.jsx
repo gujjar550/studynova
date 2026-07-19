@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { db } from './firebaseConfig'
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore'
 
 const CLOUD_NAME = "judww3bl"
 const UPLOAD_PRESET = "studynova_unsigned"
 
-function Math({ isAdmin }) {
+function Subject({ isAdmin, subjectName, collectionName }) {
   const [view, setView] = useState('main')
   const [selectedTopic, setSelectedTopic] = useState('')
   const [filesData, setFilesData] = useState([])
@@ -23,7 +23,7 @@ function Math({ isAdmin }) {
   }
 
   const loadFiles = async (topic) => {
-    const q = query(collection(db, "mathNotes"), where("topic", "==", topic))
+    const q = query(collection(db, collectionName), where("topic", "==", topic))
     const snapshot = await getDocs(q)
     const files = snapshot.docs.map(doc => doc.data())
     setFilesData(files)
@@ -49,7 +49,7 @@ function Math({ isAdmin }) {
       })
       const data = await res.json()
 
-      await addDoc(collection(db, "mathNotes"), {
+      await addDoc(collection(db, collectionName), {
         topic: selectedTopic,
         book: bookName,
         fileName: file.name,
@@ -76,7 +76,7 @@ function Math({ isAdmin }) {
   if (view === 'main') {
     return (
       <div style={{ padding: '40px' }}>
-        <h2>Math</h2>
+        <h2>{subjectName}</h2>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginTop: '20px' }}>
           {mainTopics.map((topic) => (
             <div key={topic} onClick={() => openTopic(topic)} className="card">
@@ -84,7 +84,7 @@ function Math({ isAdmin }) {
             </div>
           ))}
           <div onClick={() => setView('bsSemesters')} className="card">
-            BS Math
+            BS {subjectName}
           </div>
         </div>
       </div>
@@ -95,7 +95,7 @@ function Math({ isAdmin }) {
     return (
       <div style={{ padding: '40px' }}>
         <button onClick={() => setView('main')} style={{ marginBottom: '20px' }}>← Back</button>
-        <h2>BS Math - Select Semester</h2>
+        <h2>BS {subjectName} - Select Semester</h2>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginTop: '20px' }}>
           {semesters.map((sem) => (
             <div key={sem} onClick={() => openTopic(sem)} className="card">
@@ -117,13 +117,13 @@ function Math({ isAdmin }) {
     return (
       <div style={{ padding: '40px' }}>
         <button onClick={goBack} style={{ marginBottom: '20px' }}>← Back</button>
-        <h2>{selectedTopic} - Math Notes</h2>
+        <h2>{selectedTopic} - {subjectName} Notes</h2>
 
         {isAdmin && (
           <div style={{ marginTop: '20px', marginBottom: '10px' }}>
             <input
               type="text"
-              placeholder="Book ka naam likhein (jaise: Calculus by Thomas)"
+              placeholder="Book ka naam likhein"
               value={bookName}
               onChange={(e) => setBookName(e.target.value)}
               style={{ padding: '8px', width: '300px', marginRight: '10px' }}
@@ -155,4 +155,4 @@ function Math({ isAdmin }) {
   }
 }
 
-export default Math
+export default Subject
